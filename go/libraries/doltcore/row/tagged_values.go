@@ -18,8 +18,8 @@ func (tvs TupleVals) Kind() types.NomsKind {
 	return types.TupleKind
 }
 
-func (tvs TupleVals) Value(ctx context.Context) types.Value {
-	return types.NewTuple(tvs.nbf, tvs.vs...)
+func (tvs TupleVals) Value(ctx context.Context) (types.Value, error) {
+	return types.NewTuple(tvs.nbf, tvs.vs...), nil
 }
 
 func (tvs TupleVals) Less(nbf *types.NomsBinFormat, other types.LesserValuable) bool {

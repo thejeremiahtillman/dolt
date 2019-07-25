@@ -78,7 +78,7 @@ func (dl *DataLocation) String() string {
 }
 
 func NewDataLocation(path, fileFmtStr string) *DataLocation {
-	var dataFmt DataFormat
+	dataFmt := InvalidDataFormat
 
 	if fileFmtStr == "" {
 		if doltdb.IsValidTableName(path) {
@@ -115,7 +115,7 @@ func (dl *DataLocation) IsFileType() bool {
 	return true
 }
 
-func (dl *DataLocation) CreateReader(ctx context.Context, root *doltdb.RootValue, fs filesys.ReadableFS, schPath string, tblName string) (rdCl table.TableReadCloser, sorted bool, err error) {
+func (dl *DataLocation) CreateReader(ctx context.Context, root *doltdb.RootValue, fs filesys.ReadableFS, schPath string, tblName string, opts interface{}) (rdCl table.TableReadCloser, sorted bool, err error) {
 	if dl.Format == DoltDB {
 		tbl, ok := root.GetTable(ctx, dl.Path)
 
@@ -137,7 +137,17 @@ func (dl *DataLocation) CreateReader(ctx context.Context, root *doltdb.RootValue
 
 		switch dl.Format {
 		case CsvFile:
-			rd, err := csv.OpenCSVReader(root.VRW().Format(), dl.Path, fs, csv.NewCSVInfo())
+			delim := ","
+
+			if opts != nil {
+				csvOpts, _ := opts.(CsvOptions)
+
+				if len(csvOpts.Delim) != 0 {
+					delim = csvOpts.Delim
+				}
+			}
+
+			rd, err := csv.OpenCSVReader(root.VRW().Format(), dl.Path, fs, csv.NewCSVInfo().SetDelim(delim))
 			return rd, false, err
 
 		case PsvFile:
